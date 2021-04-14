@@ -7,3 +7,7 @@ Follow the step:
 2. Download the win rep, and run bash file to set up environment.
 3. Edit or copy main.py to run!
 4. Good luck as a HIGH-FREQUENCY TRADER!
+
+Well...
+Call me if you have any question.
+I am going to take a shower now. 
