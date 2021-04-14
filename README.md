@@ -1,4 +1,4 @@
-A yummy dessert to serve high-frequency cryptocurrency trader in Binance exachange.
+A yummy dessert to serve high-frequency cryptocurrency trader in Binance exchange.
 
 Follow the step: 
 1. Read the [quick start](https://github.com/jingjingwhales/python-binance#quick-start):
