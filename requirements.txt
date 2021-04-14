@@ -1,0 +1,7 @@
+pandas==0.24.2
+numpy==1.16.2
+pyspark==2.4.0
+python-binance
+pyyaml==5.1
+scipy
+python-binance-chain
