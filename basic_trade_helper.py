@@ -4,8 +4,13 @@ from datetime import datetime
 from time_helper import last_4_hours_milli_time, last_30_mins_milli_time
 from requests.exceptions import Timeout  # this handles ReadTimeout or ConnectTimeout
 
-api_key = "Aw5BSQ65dE1fc5knmJyNAqHahWPetNj3p0FIuxLAzXz39iGsFlB9rAzeVaat69FK"
-api_secret = "BuKiIxpVuffIm0XEfUYQtNkqEz6zTLjm02X1EU1gRUQEMefX229odKT3Tc28vAIM"
+with open("./config") as f:
+    for line in f.readlines():
+        if "api_key" in line:
+            api_key = line.strip().split('=')[1]
+        if "api_secret" in line:
+            api_secret = line.strip().split('=')[1]
+
 client = Client(api_key, api_secret,  {"verify": True, "timeout": 2000})
 
 
@@ -101,6 +106,13 @@ def get_historical_price(ticker, interval, start_time):
     hl_prices = list(map(lambda x: ([float(x[2]), float(x[3])]), sorted_klines))
     return hl_prices
 
+def get_1_day_historical_price_ts(ticker):
+    klines = client.get_historical_klines(symbol=ticker, interval=client.KLINE_INTERVAL_1MINUTE, start_str='1 day ago UTC')
+    # Sorted by oepn time
+    sorted_klines = sorted(klines, key=lambda x: x[0])
+    # list of pairs of (high price, low price)
+    close_prices = [float(x[4]) for x in sorted_klines]
+    return close_prices
 
 # return max of high price, min of low price, and average.
 def get_last_4_hours_price(ticker):

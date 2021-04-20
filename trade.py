@@ -1,6 +1,6 @@
 from binance.client import Client
-api_key = "Aw5BSQ65dE1fc5knmJyNAqHahWPetNj3p0FIuxLAzXz39iGsFlB9rAzeVaat69FK"
-api_secret = "BuKiIxpVuffIm0XEfUYQtNkqEz6zTLjm02X1EU1gRUQEMefX229odKT3Tc28vAIM"
+api_key = "wLBnuIfI6wrKfBnQXY1i9spxiN9RGc0CKDNUe91Uru3Hp7yBK1GqSSSYbcqwnAml"
+api_secret = "B2b1VrRARHDkxSPPfxEZb3LaWgYLiGmjFfbedYw3QdA03cq2mKpYG3vMBAOZQvl5"
 client = Client(api_key, api_secret)
 
 # # get market depth
