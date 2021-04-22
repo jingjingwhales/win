@@ -8,7 +8,7 @@ def fun1():
     hourly_growth_rate = ticker_list[ticker_list["ticker"]==top_ticker]["average_growht_rate"]
     hourly_vol = ticker_list[ticker_list["ticker"]==top_ticker]["average_growht_rate"]
     dynamic_buy_and_sell(ticker='STXUSDT', time=10, total_cost=1000, gap=0.008, precision=4, premium=0.02,
-                         basic_premium=0.008, sell_time_out=30, switch_trigger=0.1)
+                         basic_premium=0.008, sell_time_out=3600, switch_trigger=0.1)
 # # # #
 run_in_parallel(
     fun1,

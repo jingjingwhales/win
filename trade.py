@@ -82,7 +82,7 @@ def place_limit_sell(cost_price):
         avg_price = float(client.get_avg_price(symbol=ticker)['price'])
         if avg_price > cost_price*(1+sell_percent):
             print(str(avg_price))
-            order = client.order_limit_sell(
+            order = client. (
               symbol=ticker,
               quantity=quantity,
               price='{0:.5f}'.format(avg_price))

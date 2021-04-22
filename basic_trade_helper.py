@@ -226,13 +226,15 @@ def dynamic_buy_and_sell(ticker, time, total_cost, gap, premium, switch_trigger,
         print(
             'Buying...{0}, set the cost {1}, at the price {2}, and quantity {3}. '.format(ticker, cost_price * quantity,
                                                                                           effective_buy_price, quantity))
+        buy_time = time()
         sleep(10)
 
         if is_bought(ticker, buy_id, cancel_buy=True, buy_time_out=buy_time_out):
             print('Bought')
         else:
-            place_cancel_order(ticker, order_id=buy_id)
-            "Failed to buy, go to next loop"
+            if time() > buy_time + 3600:
+                place_cancel_order(ticker, order_id=buy_id)
+                "Failed to buy, go to next loop"
             continue
 
         quantity = round(quantity*0.997, 2)
