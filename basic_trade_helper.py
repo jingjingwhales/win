@@ -3,7 +3,6 @@ from time import sleep, time
 from datetime import datetime
 from time_helper import last_4_hours_milli_time, last_30_mins_milli_time
 from requests.exceptions import Timeout  # this handles ReadTimeout or ConnectTimeout
-import config
 
 with open("./config") as f:
     for line in f.readlines():
