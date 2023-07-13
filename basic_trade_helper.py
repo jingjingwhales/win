@@ -12,9 +12,17 @@ with open("./config") as f:
             api_secret = line.strip().split('=')[1]
 
 
-client = Client(api_key, api_secret,  {"verify": True, "timeout": 2000})
+# client = Client(api_key, api_secret,  {"verify": True, "timeout": 2000})
+# client.API_URL = 'https://data.binance.com'
 
+class bi_client_us (Client):
+    def __init__(self):
+        self.API_URL = "https://data.binance.com/api"
+        super().__init__(api_key, api_secret,  {"verify": True, "timeout": 2000})
 
+def get_new_client_api(client):
+    client.API_URL = 'https://data.binance.com'
+    return client
 
 def is_order_filled(ticker, side, order_id):
     try:

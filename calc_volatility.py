@@ -16,7 +16,7 @@ def calc_volatility(ticker):
 
 
     mean_1hr = 60 * av_growth
-    var_1hr = variance * 60
+    var_1hr = math.sqrt(variance * 60)
     return mean_1hr, var_1hr
     # price_range_2_sigma = 1.96 * math.sqrt(var_1hr)
 
@@ -55,11 +55,11 @@ def getFullListOfCryptos(numer_of_crypto_currenty, market_cap_min):
             print(e.message)
     df_vol = pd.DataFrame(data, columns=["ticker", "average_growht_rate", "volatility", "market_cap"])
 
-    df_vol.sort_values(by=["average_growht_rate", "volatility"], inplace=True, ascending=False)
+    df_vol.sort_values(by=["average_growht_rate","volatility"], inplace=True, ascending=False)
     return df_vol
 
 if __name__ == "__main__":
-    df_vol = getFullListOfCryptos(5000, 1000000000)
+    df_vol = getFullListOfCryptos(5000, 100000000)
     today = datetime.today().strftime("%Y%m%d%H%M")
-    df_vol.to_csv("daily_volatility_{today}.csv".format(today=today))
+    df_vol.to_csv("./cal_outputs/daily_volatility_{today}.csv".format(today=today))
 
