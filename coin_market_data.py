@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 # from coinbase.wallet.client import Client
 # from coinbase.wallet.model import APIObject
-import cbpro
+# import cbpro
 
 def getMarketDataFromCoinmarketcap(numer_of_crypto_currenty, market_cap_min, sort_method):
     """
@@ -53,14 +53,17 @@ def getMarketDataFromCoinmarketcap(numer_of_crypto_currenty, market_cap_min, sor
     except (ConnectionError, Timeout, TooManyRedirects) as e:
         print(e)
 
-def getDataFromCoinBase(crypto_currency, fiat_currency, time_interval):
-    public_client = cbpro.PublicClient()
-    request_pair = "{currency1}-{currency2}".format(currency1=crypto_currency, currency2=fiat_currency)
-    public_client.get_product_historic_rates(request_pair, granularity=time_interval)
-
-    print("done")
+# def getDataFromCoinBase(crypto_currency, fiat_currency, time_interval):
+#     public_client = cbpro.PublicClient()
+#     request_pair = "{currency1}-{currency2}".format(currency1=crypto_currency, currency2=fiat_currency)
+#     public_client.get_product_historic_rates(request_pair, granularity=time_interval)
+#
+#     print("done")
 
 if __name__ == "__main__":
-    df = getMarketDataFromCoinmarketcap(numer_of_crypto_currenty=5000, market_cap_min=100000000, sort_method="percent_change_24h")
+    df = getMarketDataFromCoinmarketcap(numer_of_crypto_currenty=5000, market_cap_min=10000000, sort_method="percent_change_24h")
     # getDataFromCoinBase("ETH", "USD", 300)
+    df.sort_values(by=["Market_cap"], ascending=False, inplace=True)
+    df = df[["Symbol"]]
+    df.to_csv("crypto_list.csv", index=False)
     print ("done")

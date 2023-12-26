@@ -17,7 +17,7 @@ def get_one_year_his_price_data(ticker):
     now = datetime.utcnow()
     whole_dt = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
     end_timestamp = int(whole_dt.timestamp() * 1000 - 1)
-    data = client.get_historical_klines(binance_ticker, interval=client.KLINE_INTERVAL_4HOUR, start_str="2 months ago UTC", end_str=str(end_timestamp))
+    data = client.get_historical_klines(binance_ticker, interval=client.KLINE_INTERVAL_4HOUR, start_str="4 years ago UTC", end_str=str(end_timestamp))
     oc_price = [(item[1], item[4]) for item in data if item[6] <= int(end_timestamp)]
     return oc_price
 
@@ -91,7 +91,7 @@ def find_sharp_boundary(mean_ret, cov_matrix, target_ret_list):
     return res
 
 if __name__ == "__main__":
-    crypto_list = ["BTC", "ICP", "DOGE", "LTC", "BNB", "ADA", "AGIX", "TVK", "DYDX", "SOL", "AVAX"]
+    crypto_list = ["BTC", "ETH", "ICP", "DOGE", "LTC", "BNB", "ADA", "AGIX", "TVK", "DYDX", "SOL", "AVAX"]
     df = get_df_for_list(crypto_list)
     time_frame = len(df)
     cov_matrix = df.cov()
