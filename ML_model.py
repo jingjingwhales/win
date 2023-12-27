@@ -1,4 +1,4 @@
-from basic_trade_helper import bi_client_us
+# from basic_trade_helper import bi_client_us
 import matplotlib.pyplot as plt
 import math
 import numpy as np
@@ -13,12 +13,14 @@ import pickle
 import os
 import logging
 from datetime import timezone
+import json
 from get_treasury import get_treasury_yield_scenario
 
 logging.basicConfig(filename="./modeling.log", format='%(asctime)s %(message)s', filemode='w')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-client = bi_client_us()
+# client = bi_client_us()
+DATA_DIR = "./ticker_data"
 SCEN = {
             "30YRYieldFlat": 0,
             "30YRYieldUp1bps": 1,
@@ -45,6 +47,7 @@ class cryptoMLModel:
                                                0.5/100, 1.0/100, 1.5/100, 2.0/100, np.inf]
         self.bins = ["<-2pct", "-2--1.5pct", "-1.5--1pct", "-1--0.5pct", "-0.5-0pct",
                         "0-0.5pct", "0.5-1pct", "1-1.5pct", "1.5-2pct", ">2pct"]
+        self.forecasting_data = None
 
     def model_traning(self):
 
@@ -53,7 +56,7 @@ class cryptoMLModel:
         end_timestamp = int(whole_hr_dt.timestamp() * 1000 - 1)
 
         if not os.path.isfile("./all_data.csv"):
-            df_all_data, Xvars = get_all_crytpo_data(self.window, "6 years ago UTC", str(end_timestamp))
+            df_all_data, Xvars = get_all_crytpo_data(self.window)
             df_all_data.to_csv("./all_data.csv", index=False)
         else:
             df_all_data = pd.read_csv("./all_data.csv")
@@ -99,7 +102,6 @@ class cryptoMLModel:
 
         df_all_data = pd.merge(left=df_all_data, right=df_yield[yield_lag_chg_cols + ["date"]], how="left", on=["date"])
         self.X_vars = self.X_vars + yield_lag_chg_cols
-        df_all_data.dropna(inplace=True)
 
         df_all_data = self.normalize_vars(df_all_data)
 
@@ -107,6 +109,9 @@ class cryptoMLModel:
         columns = list(df_all_data.columns)
         fixed_effect_vars = [x for x in columns if "Symbol_" in x]
         self.X_vars = self.X_vars + fixed_effect_vars
+        prediction_timestamp = end_timestamp + 3600000 * 24
+        self.forecasting_data = df_all_data[df_all_data["timestamp"]==prediction_timestamp]
+        df_all_data.dropna(inplace=True)
 
         # for var in self.X_vars:
         #     x_max = df_all_data[var].max()
@@ -238,10 +243,12 @@ def get_pct_change_lag(data, window):
         res.append(data[i] / data[i - window] - 1)
     return res
 
-def get_data(crypto_name, time_window, start_timestamp, end_timestamp):
+def get_data(crypto_name, time_window):
     binance_ticker = crypto_name + "USDT"
-    data = client.get_historical_klines(symbol=binance_ticker, interval=client.KLINE_INTERVAL_1DAY, start_str=start_timestamp, end_str=end_timestamp)
-    data = [item for item in data if item[6] <= int(end_timestamp)] #in case the data end at timestamp greater than desired
+    ticker_json_file = DATA_DIR + "/{ticker}.json".format(ticker=crypto_name)
+    with open(ticker_json_file, 'r') as openfile:
+        data_dict = json.load(openfile)
+    data = data_dict[crypto_name]
     time_stamp = [item[6] for item in data]
     data = [[float(x) for x in item] for item in data]
     avg_price = [(item[1] + item[4]) / 2 for item in data]
@@ -315,7 +322,7 @@ def get_crypto_list(file_name):
         df = pd.read_csv(file_name)
     return df
 
-def get_all_crytpo_data(time_window, start_timestamp, end_timestamp):
+def get_all_crytpo_data(time_window):
     logger.info("Getting crypto data...")
     df_list = get_crypto_list("crypto_list.csv")
     df_all_crypto_data = pd.DataFrame()
@@ -325,7 +332,7 @@ def get_all_crytpo_data(time_window, start_timestamp, end_timestamp):
         if "USD" in ticker:
             continue
         try:
-            df_crypto, Xvars = get_data(ticker, time_window, start_timestamp, end_timestamp)
+            df_crypto, Xvars = get_data(ticker, time_window)
             df_crypto["Symbol"] = ticker
             df_all_crypto_data = pd.concat([df_all_crypto_data, df_crypto])
         except Exception as e:
@@ -357,71 +364,68 @@ def normalizePredProd(prob1, prob_sum):
 
 if __name__ == "__main__":
     time_window = [1,2,3,4,7,12,24,30,60,90]
-    if os.path.isfile("./model_output.pkl"):
-        crypto_model = read_model("./model_output.pkl")
+    if os.path.isfile("model_output.pkl"):
+        crypto_model = read_model("model_output.pkl")
     else:
         crypto_model = cryptoMLModel(time_window)
         crypto_model.model_traning()
-        save_model(crypto_model, "./model_output.pkl")
+        save_model(crypto_model, "model_output.pkl")
 
     now = datetime.utcnow()
     whole_dt = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
     end_timestamp = int(whole_dt.timestamp() * 1000 - 1)
 
-    if os.path.isfile("./predict_data.csv"):
-        df_predict_data = pd.read_csv("./predict_data.csv")
-        Xvars = get_x_var(time_window)
-    else:
-        df_predict_data, Xvars= get_all_crytpo_data(time_window, "1 year ago UTC", str(end_timestamp))
-        df_predict_data.to_csv("./predict_data.csv", index=False)
-    df_predict_data = crypto_model.get_fix_effect(df_predict_data)
-    columns = list(df_predict_data.columns)
-    fixed_effect_vars = [x for x in columns if "Symbol_" in x]
-    Xvars = Xvars + fixed_effect_vars
-    df_index = pd.read_csv("FNG_index.index")
-    # df_index["date"] = df_index["date"].apply(
+    df_predict_data = crypto_model.forecasting_data
+    Xvars = crypto_model.X_vars
+    # Xvars = get_x_var(time_window)
+    # # df_predict_data = crypto_model.get_fix_effect(df_predict_data)
+    # columns = list(df_predict_data.columns)
+    # fixed_effect_vars = [x for x in columns if "Symbol_" in x]
+    # Xvars = Xvars + fixed_effect_vars
+    # df_index = pd.read_csv("FNG_index.index")
+    # # df_index["date"] = df_index["date"].apply(
+    # #     lambda val: datetime.strftime(datetime.strptime(val, "%m-%d-%Y") + timedelta(days=1), "%m-%d-%Y"))
+    # df_predict_data["date"] = df_predict_data["timestamp"].apply(lambda val: \
+    #                                                          datetime.strftime(
+    #                                                              datetime.utcfromtimestamp((val) / 1000), "%m-%d-%Y"))
+    # index_lag_chg_cols = []
+    # for lag in time_window:
+    #     lag_column = "fng_value_lag_{lag}".format(lag=lag)
+    #     pct_chg_column = "fng_value_chg_{lag}".format(lag=lag)
+    #     df_index[lag_column] = df_index["fng_value"].shift(periods=lag)
+    #     df_index[pct_chg_column] = df_index["fng_value"] / df_index[lag_column] - 1
+    #     index_lag_chg_cols.append(pct_chg_column)
+    # df_predict_data = pd.merge(left=df_predict_data, right=df_index[index_lag_chg_cols + ["date"]], how="left", on=["date"])
+    # Xvars = Xvars + index_lag_chg_cols
+    #
+    # logger.info("getting treasury yield data...")
+    # df_yield = pd.read_csv("historical_treasury_yield_curve.csv")
+    # df_yield = df_yield[["Date", "30 YR"]]
+    # df_yield.rename(columns={"30 YR": "yield", "Date": "date"}, inplace=True)
+    # df_yield["date"] = df_yield["date"].apply(
+    #     lambda val: datetime.strftime(datetime.strptime(val, "%Y-%m-%d"), "%m-%d-%Y"))
+    # df_yield["date"] = df_yield["date"].apply(
     #     lambda val: datetime.strftime(datetime.strptime(val, "%m-%d-%Y") + timedelta(days=1), "%m-%d-%Y"))
-    df_predict_data["date"] = df_predict_data["timestamp"].apply(lambda val: \
-                                                             datetime.strftime(
-                                                                 datetime.utcfromtimestamp((val) / 1000), "%m-%d-%Y"))
-    index_lag_chg_cols = []
-    for lag in time_window:
-        lag_column = "fng_value_lag_{lag}".format(lag=lag)
-        pct_chg_column = "fng_value_chg_{lag}".format(lag=lag)
-        df_index[lag_column] = df_index["fng_value"].shift(periods=lag)
-        df_index[pct_chg_column] = df_index["fng_value"] / df_index[lag_column] - 1
-        index_lag_chg_cols.append(pct_chg_column)
-    df_predict_data = pd.merge(left=df_predict_data, right=df_index[index_lag_chg_cols + ["date"]], how="left", on=["date"])
-    Xvars = Xvars + index_lag_chg_cols
-
-    logger.info("getting treasury yield data...")
-    df_yield = pd.read_csv("historical_treasury_yield_curve.csv")
-    df_yield = df_yield[["Date", "30 YR"]]
-    df_yield.rename(columns={"30 YR": "yield", "Date": "date"}, inplace=True)
-    df_yield["date"] = df_yield["date"].apply(
-        lambda val: datetime.strftime(datetime.strptime(val, "%Y-%m-%d"), "%m-%d-%Y"))
-    df_yield["date"] = df_yield["date"].apply(
-        lambda val: datetime.strftime(datetime.strptime(val, "%m-%d-%Y") + timedelta(days=1), "%m-%d-%Y"))
-    yield_lag_chg_cols = []
-    for lag in time_window:
-        lag_column = "30Y_yield_lag_{lag}".format(lag=lag)
-        pct_chg_column = "30Y_yield_chg_{lag}".format(lag=lag)
-        df_yield[lag_column] = df_yield["yield"].shift(periods=lag)
-        df_yield[pct_chg_column] = df_yield["yield"] / df_yield[lag_column] - 1
-        yield_lag_chg_cols.append(pct_chg_column)
-    Xvars = Xvars + yield_lag_chg_cols
-    df_predict_data = pd.merge(left=df_predict_data, right=df_yield[yield_lag_chg_cols + ["date"]], how="left", on=["date"])
+    # yield_lag_chg_cols = []
+    # for lag in time_window:
+    #     lag_column = "30Y_yield_lag_{lag}".format(lag=lag)
+    #     pct_chg_column = "30Y_yield_chg_{lag}".format(lag=lag)
+    #     df_yield[lag_column] = df_yield["yield"].shift(periods=lag)
+    #     df_yield[pct_chg_column] = df_yield["yield"] / df_yield[lag_column] - 1
+    #     yield_lag_chg_cols.append(pct_chg_column)
+    # Xvars = Xvars + yield_lag_chg_cols
+    # df_predict_data = pd.merge(left=df_predict_data, right=df_yield[yield_lag_chg_cols + ["date"]], how="left", on=["date"])
 
     last_hr_X = df_predict_data[df_predict_data["timestamp"] == end_timestamp + 24 * 3600000]
 
-    for var in crypto_model.X_vars_range:
-        last_hr_X[var] = (last_hr_X[var] - crypto_model.X_vars_range[var][0]) / (
-                    crypto_model.X_vars_range[var][1] - crypto_model.X_vars_range[var][0])
-    last_hr_X.dropna(subset=Xvars, inplace=True)
-    for var in crypto_model.X_vars:
-        if var not in Xvars:
-            logger.info("{var} is missing in the prediction dataset...defaulting it to 0".format(var=var))
-            last_hr_X[var] = 0
+    # for var in crypto_model.X_vars_range:
+    #     last_hr_X[var] = (last_hr_X[var] - crypto_model.X_vars_range[var][0]) / (
+    #                 crypto_model.X_vars_range[var][1] - crypto_model.X_vars_range[var][0])
+    # last_hr_X.dropna(subset=Xvars, inplace=True)
+    # for var in crypto_model.X_vars:
+    #     if var not in Xvars:
+    #         logger.info("{var} is missing in the prediction dataset...defaulting it to 0".format(var=var))
+    #         last_hr_X[var] = 0
     predict_cols = []
     for bin in crypto_model.bins:
         model_name = "price_movement_model_{mdl_bin}".format(mdl_bin=bin)

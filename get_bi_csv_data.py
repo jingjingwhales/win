@@ -85,14 +85,19 @@ if __name__ == "__main__":
     df_list = get_crypto_list("crypto_list.csv")
     ticker_list = df_list["Symbol"].to_list()
     ticker_list = [item for item in ticker_list if "USD" not in item]
-    START_DATE = "20151224"
-    END_DATE = "20191224"
+    START_DATE = "20231224"
+    END_DATE = "20231225"
     FREQ = "1d"
     if TEST:
         ticker_list = ticker_list[:TEST_BATCH]
     executions = [(ticker, START_DATE, END_DATE, FREQ) for ticker in ticker_list]
     print ("total amount of tickers = {ticker_amount}".format(ticker_amount=len(ticker_list)))
-    with multiprocessing.Pool(processes=72, initializer=init, initargs=(counter, )) as pool:
+    with multiprocessing.Pool(processes=48, initializer=init, initargs=(counter, )) as pool:
         df_res = pool.starmap(getBIAllDatesPricingData, executions)
     df_all = pd.concat(df_res, axis=0)
-    df_all.to_csv("./all_data_{start}_{end}.csv".format(start=START_DATE, end=END_DATE), index=False)
+    if not os.path.isfile("all_data_{start}_{end}.csv".format(start=START_DATE, end=END_DATE)):
+        df_hist = pd.read_csv("all_data.csv")
+        df_hist = pd.concat([df_all, df_hist])
+        df_hist.sort_values(by=["symbol", "date"], ascending=True, inplace=True)
+        df_all.to_csv("./all_data_{start}_{end}.csv".format(start=START_DATE, end=END_DATE), index=False)
+        df_hist.to_csv("all_data.csv", index=False)

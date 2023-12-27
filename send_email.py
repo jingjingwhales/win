@@ -5,8 +5,8 @@ import pandas as pd
 from collections import defaultdict
 
 DEV_EMAIL_LIST = "huayong.chow@gmail.com"
-POS_LIST = {"BTC", "ETH", "AVAX", "BNB", "LTC", "ICP", "DOGE",
-            "PEOPLE", "TVK", "SUSHI", "DYDX", "SOL", "ADA", "APT", "UNI", "FIL", "MINA"}
+POS_LIST = {"BTC", "ETH", "AVAX", "BNB", "LTC", "ICP", "DOGE", "MATIC",
+             "SUSHI", "DYDX", "SOL", "ADA", "APT", "UNI", "FIL"}
 POS_PROB = defaultdict(lambda: "")
 PROB_THRESHOLD = [-2.0/100, -1.5/100, -1.0/100, -0.5/100, 0.0/100,
                 0.5/100, 1.0/100, 1.5/100, 2.0/100,]

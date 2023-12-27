@@ -4,7 +4,7 @@ from datetime import datetime
 from time_helper import last_4_hours_milli_time, last_30_mins_milli_time
 from requests.exceptions import Timeout  # this handles ReadTimeout or ConnectTimeout
 
-with open("./config") as f:
+with open("./config_app") as f:
     for line in f.readlines():
         if "api_key" in line:
             api_key = line.strip().split('=')[1]
@@ -17,7 +17,7 @@ with open("./config") as f:
 
 class bi_client_us (Client):
     def __init__(self):
-        self.API_URL = "https://data.binance.com/api"
+        self.API_URL = "https://data-api.binance.vision/api"
         super().__init__(api_key, api_secret,  {"verify": True, "timeout": 2000})
 
 def get_new_client_api(client):
