@@ -92,7 +92,7 @@ if __name__ == "__main__":
         ticker_list = ticker_list[:TEST_BATCH]
     executions = [(ticker, START_DATE, END_DATE, FREQ) for ticker in ticker_list]
     print ("total amount of tickers = {ticker_amount}".format(ticker_amount=len(ticker_list)))
-    with multiprocessing.Pool(processes=144, initializer=init, initargs=(counter, )) as pool:
+    with multiprocessing.Pool(processes=72, initializer=init, initargs=(counter, )) as pool:
         df_res = pool.starmap(getBIAllDatesPricingData, executions)
     df_all = pd.concat(df_res, axis=0)
     df_all.to_csv("./all_data_{start}_{end}.csv".format(start=START_DATE, end=END_DATE), index=False)
