@@ -85,8 +85,8 @@ if __name__ == "__main__":
     df_list = get_crypto_list("crypto_list.csv")
     ticker_list = df_list["Symbol"].to_list()
     ticker_list = [item for item in ticker_list if "USD" not in item]
-    START_DATE = "20211224"
-    END_DATE = "20221224"
+    START_DATE = "20151224"
+    END_DATE = "20191224"
     FREQ = "1d"
     if TEST:
         ticker_list = ticker_list[:TEST_BATCH]
