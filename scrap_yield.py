@@ -22,7 +22,7 @@ def isTodayWeekendDayOrHoliday():
         return True
     return False
 
-URL = "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2023/all?type=daily_treasury_yield_curve&field_tdr_date_value=2022&page&_format=csv"
+URL = "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2024/all?type=daily_treasury_yield_curve&field_tdr_date_value=2022&page&_format=csv"
 if isTodayWeekendDayOrHoliday():
     df_history = pd.read_csv("historical_treasury_yield_curve.csv")
     latest_day_str = df_history["Date"].tolist()[-1]

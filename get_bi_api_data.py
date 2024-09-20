@@ -10,9 +10,9 @@ from collections import defaultdict
 
 client = bi_client_us()
 # HISTORY_START_DATE = "2 years ago UTC"
-HISTORY_START_DATE = "2021-12-26"
-HISTORY_END_DATE = "2023-12-25"
-NEW_RUN_START_DATE = "2023-12-26"
+HISTORY_START_DATE = "2016-12-26"
+HISTORY_END_DATE = "2024-03-23"
+NEW_RUN_START_DATE = "2024-03-24"
 DATA_DIR = "./ticker_data"
 counter = None
 
